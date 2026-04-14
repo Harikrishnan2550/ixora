@@ -3,6 +3,7 @@
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link"; // <-- Added this import
 import { FaArrowRight, FaWhatsapp, FaPlus } from "react-icons/fa6";
 import { Audiowide } from "next/font/google";
 
@@ -126,7 +127,7 @@ export default function Hero() {
               initial={{ opacity: 0, y: 30 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className={`${audiowide.className} text-[14vw] sm:text-[12vw] lg:text-[7.5rem] xl:text-[6.8rem] leading-[0.9] lg:leading-[0.85] tracking-[-0.05em] uppercase text-slate-950 mb-6`}
+              className={`${audiowide.className} text-[14vw] sm:text-[12vw] lg:text-[7.5rem] xl:text-[8.5rem] leading-[0.9] lg:leading-[0.85] tracking-[-0.05em] uppercase text-slate-950 mb-6`}
             >
               Solar <br />
               <span className="text-orange-500 italic">Evolved.</span>
@@ -148,13 +149,16 @@ export default function Hero() {
               transition={{ duration: 0.8, delay: 0.3 }}
               className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 mt-10 md:mt-12 w-full sm:w-auto"
             >
-              <motion.button
-                whileTap={{ scale: 0.98 }}
-                className="w-full sm:w-auto bg-slate-950 text-white px-8 py-5 rounded-[1.25rem] font-black text-[10px] uppercase tracking-[0.3em] flex items-center justify-center gap-4 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.5)] hover:bg-orange-500 hover:shadow-[0_20px_40px_-15px_rgba(249,115,22,0.4)] transition-all duration-500 group"
-              >
-                <span>Get the pricing</span>
-                <FaArrowRight className="text-lg group-hover:translate-x-1.5 transition-transform duration-300" />
-              </motion.button>
+              {/* ── ROUTING ADDED HERE ── */}
+              <Link href="/pricing" className="w-full sm:w-auto block">
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full bg-slate-950 text-white px-8 py-5 rounded-[1.25rem] font-black text-[10px] uppercase tracking-[0.3em] flex items-center justify-center gap-4 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.5)] hover:bg-orange-500 hover:shadow-[0_20px_40px_-15px_rgba(249,115,22,0.4)] transition-all duration-500 group"
+                >
+                  <span>Get the pricing</span>
+                  <FaArrowRight className="text-lg group-hover:translate-x-1.5 transition-transform duration-300" />
+                </motion.button>
+              </Link>
 
               <motion.a
                 href="#"
@@ -177,7 +181,6 @@ export default function Hero() {
                 transition={{ duration: 1, ease: "easeOut" }}
                 className="relative aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white bg-slate-100"
               >
-                {/* Replace with your exact hero image path */}
                 <Image 
                   src="/hero.png" 
                   alt="Premium Solar Infrastructure"
@@ -204,7 +207,6 @@ export default function Hero() {
                 className="absolute -bottom-8 -left-4 md:-bottom-12 md:-left-12 bg-slate-950 border border-slate-800 p-6 md:p-8 rounded-[2rem] shadow-[0_20px_50px_-15px_rgba(0,0,0,0.5)] z-20 w-[140px] md:w-[180px] flex flex-col justify-center"
               >
                 <div className="flex items-center gap-3 mb-2">
-                  {/* Live Pulsing Dot */}
                   <span className="relative flex h-2.5 w-2.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
