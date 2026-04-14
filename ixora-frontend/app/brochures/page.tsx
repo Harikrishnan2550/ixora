@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
+import Link from "next/link";
 import { Audiowide } from "next/font/google";
 import { 
   FaFilePdf, FaDownload, FaArrowRight, FaEye, 
@@ -34,6 +35,21 @@ export default function BrochurePage() {
   }, []);
 
   const fetchBrochures = async () => {
+    // ── TEMPORARY MOCK DATA FOR VERCEL DEMO ──
+    setTimeout(() => {
+      const dummyData = [
+        { _id: "1", title: "3kW Essential Grid Spec", fileUrl: "#" },
+        { _id: "2", title: "5kW Performance Node Protocol", fileUrl: "#" },
+        { _id: "3", title: "Anodized Mounting Structural Integrity", fileUrl: "#" },
+        { _id: "4", title: "Protech Hybrid Inverter Datasheet", fileUrl: "#" },
+        { _id: "5", title: "LiFePO4 Battery Storage Node", fileUrl: "#" },
+        { _id: "6", title: "Commercial Grid-Sync Guidelines", fileUrl: "#" },
+      ];
+      setBrochures(dummyData);
+      setLoading(false);
+    }, 800); // 800ms timeout to show the beautiful loading spinner briefly
+
+    /* BACKEND FETCH LOGIC (Commented out for UI demo)
     try {
       const res = await fetch("http://localhost:5000/api/brochures");
       const data = await res.json();
@@ -42,6 +58,7 @@ export default function BrochurePage() {
       console.log("Fetch error:", error);
     }
     setLoading(false);
+    */
   };
 
   return (
@@ -136,7 +153,7 @@ export default function BrochurePage() {
           </div>
         </motion.div>
 
-        {/* ── 4. DYNAMIC BROCHURE GRID (API FETCHED) ── */}
+        {/* ── 4. DYNAMIC BROCHURE GRID ── */}
         <section className="relative mb-40">
           <div className="mb-10 flex items-center gap-4">
             <h3 className={`${audiowide.className} text-2xl uppercase text-slate-950`}>Component Specs</h3>
@@ -174,8 +191,7 @@ export default function BrochurePage() {
 
                   <div className="flex flex-col gap-3 mt-auto">
                     <a
-                      href={"http://localhost:5000/" + item.fileUrl}
-                      target="_blank"
+                      href={item.fileUrl}
                       className="flex items-center justify-between bg-slate-950 text-white px-6 py-4.5 rounded-xl font-black text-[9px] uppercase tracking-widest group/view hover:bg-orange-500 transition-all duration-300"
                     >
                       <span>View Protocol</span>
@@ -183,8 +199,7 @@ export default function BrochurePage() {
                     </a>
 
                     <a
-                      href={"http://localhost:5000/" + item.fileUrl}
-                      download
+                      href={item.fileUrl}
                       className="flex items-center justify-between border border-slate-200 text-slate-950 px-6 py-4.5 rounded-xl font-black text-[9px] uppercase tracking-widest hover:border-slate-950 hover:bg-slate-50 transition-all duration-300 group/dl"
                     >
                       <span>Download File</span>
@@ -194,18 +209,6 @@ export default function BrochurePage() {
                 </motion.div>
               ))}
             </div>
-          )}
-
-          {!loading && brochures.length === 0 && (
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              className="text-center py-32 border-2 border-dashed border-slate-200 rounded-[3rem] bg-slate-50/50"
-            >
-              <FaBookBookmark className="mx-auto text-4xl text-slate-300 mb-6" />
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">
-                0 Documents / Database Syncing...
-              </p>
-            </motion.div>
           )}
         </section>
 
@@ -264,10 +267,12 @@ export default function BrochurePage() {
              </p>
            </div>
            
-           <button className="flex-shrink-0 bg-white text-orange-500 px-8 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-950 hover:text-white transition-all duration-500 shadow-xl flex items-center gap-4 group">
-             <span>Contact Engineering</span>
-             <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
-           </button>
+           <Link href="/contact" className="flex-shrink-0 group">
+             <button className="bg-white text-orange-500 px-8 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-950 hover:text-white transition-all duration-500 shadow-xl flex items-center gap-4">
+               <span>Contact Engineering</span>
+               <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
+             </button>
+           </Link>
         </motion.div>
 
       </div>

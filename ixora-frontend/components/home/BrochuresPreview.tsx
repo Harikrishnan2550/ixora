@@ -7,9 +7,6 @@ import { Audiowide } from "next/font/google";
 
 const audiowide = Audiowide({ weight: "400", subsets: ["latin"] });
 
-// Set your backend URL here
-const API_BASE = "http://localhost:5000";
-
 export default function Brochures() {
   const [brochures, setBrochures] = useState<any[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -26,13 +23,23 @@ export default function Brochures() {
   }, []);
 
   const fetchBrochures = async () => {
+    // ── TEMPORARY MOCK DATA FOR VERCEL DEMO ──
+    const dummyData = [
+      { _id: "1", title: "3kW Essential Grid Spec", fileUrl: "#" },
+      { _id: "2", title: "5kW Performance Node", fileUrl: "#" },
+      { _id: "3", title: "Hybrid Inverter Datasheet", fileUrl: "#" },
+    ];
+    setBrochures(dummyData);
+
+    /* BACKEND FETCH LOGIC (Commented out for UI demo)
     try {
-      const res = await fetch(`${API_BASE}/api/brochures`);
+      const res = await fetch(`http://localhost:5000/api/brochures`);
       const data = await res.json();
       setBrochures(data);
     } catch (error) {
       console.error("Technical Archive Error:", error);
     }
+    */
   };
 
   return (
@@ -61,10 +68,9 @@ export default function Brochures() {
           >
             <div className="flex items-center gap-4 mb-6">
               <span className="text-orange-500 font-black text-[10px] tracking-[0.5em] uppercase">Document Repository</span>
-              {/* Animated Drawing Line */}
               <motion.div 
                 initial={{ width: 0 }}
-                whileInView={{ width: 64 }} // w-16 equivalent
+                whileInView={{ width: 64 }}
                 viewport={{ once: true }}
                 transition={{ duration: 1, delay: 0.3 }}
                 className="h-[1px] bg-slate-300" 
@@ -95,16 +101,14 @@ export default function Brochures() {
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
-              // Delay multiplies by index to create the waterfall effect
               transition={{ delay: index * 0.15, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               whileHover={{ 
                 y: -8, 
                 boxShadow: "0 25px 50px -12px rgba(0,0,0,0.08)",
-                borderColor: "rgba(249, 115, 22, 0.2)" // Faint orange border on hover
+                borderColor: "rgba(249, 115, 22, 0.2)"
               }}
               className="group bg-white p-10 rounded-[2.5rem] border border-slate-100 flex flex-col justify-between min-h-[340px] relative overflow-hidden transition-colors duration-500"
             >
-              {/* Background Kinetic Detail */}
               <div className="absolute -bottom-6 -right-4 opacity-[0.02] group-hover:opacity-[0.06] transition-opacity duration-700 pointer-events-none transform group-hover:scale-110">
                 <FaFilePdf size={180} />
               </div>
@@ -129,16 +133,13 @@ export default function Brochures() {
 
               <div className="flex gap-4 mt-12 relative z-10">
                 <a
-                  href={`${API_BASE}/${item.fileUrl}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={item.fileUrl}
                   className="flex-1 flex items-center justify-center gap-2 bg-slate-950 text-white text-[10px] font-black uppercase tracking-widest py-4 rounded-xl hover:bg-orange-500 transition-all duration-300 shadow-md hover:shadow-orange-500/20 group/view"
                 >
                   <FaEye className="group-hover/view:scale-110 transition-transform" /> View
                 </a>
                 <a
-                  href={`${API_BASE}/${item.fileUrl}`}
-                  download
+                  href={item.fileUrl}
                   className="flex-1 flex items-center justify-center gap-2 border border-slate-200 text-slate-900 text-[10px] font-black uppercase tracking-widest py-4 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 group/dl"
                 >
                   <FaDownload className="text-slate-400 group-hover/dl:text-slate-900 transition-colors" /> Get Copy
@@ -146,17 +147,6 @@ export default function Brochures() {
               </div>
             </motion.div>
           ))}
-
-          {brochures.length === 0 && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="col-span-full py-24 border-2 border-dashed border-slate-200 rounded-[3rem] flex flex-col items-center justify-center bg-white"
-            >
-              <FaFilePdf className="text-4xl text-slate-200 mb-4" />
-              <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-[10px]">Archive is currently empty.</p>
-            </motion.div>
-          )}
         </div>
       </div>
     </section>
