@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { FaSolarPanel, FaCheck, FaArrowRight, FaXmark, FaWhatsapp } from "react-icons/fa6";
+import { FaSolarPanel, FaCheck, FaArrowRight, FaXmark, FaWhatsapp, FaEnvelope } from "react-icons/fa6";
 import { useState, useRef } from "react";
 import { Audiowide } from "next/font/google";
 import Image from "next/image";
@@ -9,12 +9,29 @@ import Image from "next/image";
 const audiowide = Audiowide({ weight: "400", subsets: ["latin"] });
 
 export default function Pricing() {
-  const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: "", phone: "", type: "Residential", capacity: "" });
+  // Upgraded State: Tracks if the modal is open, which type of form to show, and the selected plan
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: "fixed" | "custom";
+    selectedPlan: string;
+  }>({
+    isOpen: false,
+    type: "custom",
+    selectedPlan: "",
+  });
+
+  // Expanded form data to include email and address for the new form
+  const [formData, setFormData] = useState({ 
+    name: "", 
+    phone: "", 
+    email: "",
+    address: "",
+    type: "Residential", 
+    capacity: "" 
+  });
 
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Parallax scroll effect for the background
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start end", "end start"],
@@ -26,7 +43,7 @@ export default function Pricing() {
       name: "Essential Grid",
       power: "3 KW On-Grid",
       price: "₹2,10,000",
-      image: "/3kw.png", // Ensure this path is correct in your public folder
+      image: "/3kw.png", 
       features: ["Brand: Customer Choice", "25Y On-Site Warranty", "Mounting Structure Incl.", "Residential Optimized"],
       highlight: false,
     },
@@ -34,17 +51,33 @@ export default function Pricing() {
       name: "Performance Node",
       power: "5 KW On-Grid",
       price: "₹3,10,000",
-      image: "/5kw.png", // Ensure this path is correct in your public folder
+      image: "/5kw.png", 
       features: ["Brand: Customer Choice", "25Y On-Site Warranty", "High-Load Mounting Structure", "Performance Inverter"],
       highlight: true,
     },
   ];
 
+  // Handler for the Custom WhatsApp Form
   const handleWhatsAppSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const message = `*New Solar Inquiry*%0A*Name:* ${formData.name}%0A*Phone:* ${formData.phone}%0A*Type:* ${formData.type}%0A*Requested Capacity:* ${formData.capacity}kW`;
-    window.open(`https://wa.me/918714302550?text=${message}`, "_blank"); // Replace with your company number
-    setOpen(false);
+    window.open(`https://wa.me/918714302550?text=${message}`, "_blank"); 
+    setModalConfig({ ...modalConfig, isOpen: false });
+  };
+
+  // Handler for the Fixed Plan Email Form (Logic to be connected later)
+  const handleEmailSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const submissionData = {
+      planSelected: modalConfig.selectedPlan,
+      customerDetails: formData
+    };
+    
+    console.log("Ready for Email API integration:", submissionData);
+    // TODO: Add Mail Configuration API call here later
+    
+    // Temporarily just close the modal upon "submit"
+    setModalConfig({ ...modalConfig, isOpen: false });
   };
 
   return (
@@ -73,7 +106,6 @@ export default function Pricing() {
               className="flex items-center gap-4 mb-6"
             >
               <span className="text-orange-500 font-black text-[10px] tracking-[0.5em] uppercase">The Infrastructure</span>
-              {/* Animated Drawing Line */}
               <motion.div 
                 initial={{ width: 0 }}
                 whileInView={{ width: 64 }}
@@ -107,8 +139,9 @@ export default function Pricing() {
           </motion.div>
         </div>
 
-        {/* ── 3. PRICING CARDS (STAGGERED SLIDE FROM RIGHT) ── */}
+        {/* ── 3. PRICING CARDS ── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 overflow-hidden py-4">
+          {/* Fixed Plans */}
           {plans.map((plan, index) => (
             <motion.div 
               key={index} 
@@ -121,7 +154,6 @@ export default function Pricing() {
               }`}
             >
               <div>
-                {/* Image Section */}
                 <div className="relative h-48 w-full mb-8 rounded-[2rem] overflow-hidden transition-all duration-700 bg-slate-100">
                   <Image src={plan.image} alt={plan.power} fill className="object-cover" />
                   {plan.highlight && (
@@ -151,7 +183,8 @@ export default function Pricing() {
               <div className="mt-12">
                 <h2 className={`${audiowide.className} text-4xl md:text-5xl tracking-tighter mb-8`}>{plan.price}</h2>
                 <button
-                  onClick={() => setOpen(true)}
+                  // OPEN MODAL AS FIXED PLAN EMAIL FORM
+                  onClick={() => setModalConfig({ isOpen: true, type: "fixed", selectedPlan: plan.name })}
                   className={`group w-full flex items-center justify-between py-5 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-500 ${
                     plan.highlight ? "bg-orange-500 text-white hover:bg-white hover:text-slate-950" : "bg-slate-950 text-white hover:bg-orange-500"
                   }`}
@@ -163,7 +196,7 @@ export default function Pricing() {
             </motion.div>
           ))}
 
-          {/* CUSTOM CAPACITY CARD (Last to slide in) */}
+          {/* Custom Capacity Card */}
           <motion.div 
             initial={{ opacity: 0, x: 150 }} 
             whileInView={{ opacity: 1, x: 0 }} 
@@ -183,7 +216,8 @@ export default function Pricing() {
                  For industrial or higher capacity residential needs.
                </p>
                <button 
-                  onClick={() => setOpen(true)}
+                  // OPEN MODAL AS CUSTOM WHATSAPP FORM
+                  onClick={() => setModalConfig({ isOpen: true, type: "custom", selectedPlan: "Custom Capacity" })}
                   className="bg-white text-orange-500 w-full px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-950 hover:text-white transition-all duration-500 shadow-xl flex items-center justify-center gap-4 group/btn"
                >
                   <span>Start Configurator</span>
@@ -194,16 +228,16 @@ export default function Pricing() {
         </div>
       </div>
 
-      {/* ── 4. CUSTOM INQUIRY FORM MODAL ── */}
+      {/* ── 4. DUAL-PURPOSE INQUIRY FORM MODAL ── */}
       <AnimatePresence>
-        {open && (
+        {modalConfig.isOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center px-6">
             {/* Modal Backdrop Blur */}
             <motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
               exit={{ opacity: 0 }} 
-              onClick={() => setOpen(false)} 
+              onClick={() => setModalConfig({ ...modalConfig, isOpen: false })} 
               className="absolute inset-0 bg-slate-950/60 backdrop-blur-md" 
             />
             
@@ -216,55 +250,106 @@ export default function Pricing() {
               className="relative bg-white w-full max-w-lg rounded-[2.5rem] p-10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)]"
             >
               <button 
-                onClick={() => setOpen(false)} 
+                onClick={() => setModalConfig({ ...modalConfig, isOpen: false })} 
                 className="absolute top-8 right-8 text-slate-400 hover:text-slate-950 transition-colors"
               >
                 <FaXmark size={24} />
               </button>
               
-              <h2 className={`${audiowide.className} text-2xl uppercase mb-8 text-slate-950`}>
-                Custom <span className="text-orange-500">Configuration</span>
-              </h2>
-              
-              <form onSubmit={handleWhatsAppSubmit} className="space-y-5 text-left">
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Full Name</label>
-                  <input required type="text" className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
-                    onChange={(e) => setFormData({...formData, name: e.target.value})} />
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">WhatsApp Number</label>
-                  <input required type="tel" className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})} />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Site Type</label>
-                    <select className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all text-slate-700"
-                      onChange={(e) => setFormData({...formData, type: e.target.value})}>
-                      <option>Residential</option>
-                      <option>Commercial</option>
-                      <option>Industrial</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Required kW</label>
-                    <input required type="number" placeholder="e.g. 10" className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
-                      onChange={(e) => setFormData({...formData, capacity: e.target.value})} />
-                  </div>
-                </div>
-                
-                <motion.button 
-                  whileTap={{ scale: 0.98 }}
-                  type="submit" 
-                  className="w-full py-6 mt-4 rounded-2xl bg-green-500 text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-4 hover:bg-green-600 transition-all shadow-lg hover:shadow-green-500/25"
-                >
-                  <FaWhatsapp size={18} />
-                  <span>Send to WhatsApp</span>
-                </motion.button>
-              </form>
+              {/* ── CONDITIONAL RENDER: EMAIL FORM (FIXED PLANS) ── */}
+              {modalConfig.type === "fixed" ? (
+                <>
+                  <h2 className={`${audiowide.className} text-2xl uppercase mb-2 text-slate-950`}>
+                    Plan <span className="text-orange-500">Enquiry</span>
+                  </h2>
+                  <p className="text-[10px] font-black tracking-[0.2em] uppercase text-slate-400 mb-8">
+                    Selected: <span className="text-slate-800">{modalConfig.selectedPlan}</span>
+                  </p>
+                  
+                  <form onSubmit={handleEmailSubmit} className="space-y-5 text-left">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Full Name</label>
+                        <input required type="text" className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
+                          onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Phone System</label>
+                        <input required type="tel" className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Email Address</label>
+                      <input required type="email" className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
+                        onChange={(e) => setFormData({...formData, email: e.target.value})} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Installation Address</label>
+                      <input required type="text" className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
+                        onChange={(e) => setFormData({...formData, address: e.target.value})} />
+                    </div>
+
+                    <motion.button 
+                      whileTap={{ scale: 0.98 }}
+                      type="submit" 
+                      className="w-full py-6 mt-4 rounded-2xl bg-slate-950 text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-4 hover:bg-orange-500 transition-all shadow-lg hover:shadow-orange-500/25"
+                    >
+                      <FaEnvelope size={16} />
+                      <span>Submit Request</span>
+                    </motion.button>
+                  </form>
+                </>
+              ) : (
+                /* ── CONDITIONAL RENDER: WHATSAPP FORM (CUSTOM kW) ── */
+                <>
+                  <h2 className={`${audiowide.className} text-2xl uppercase mb-8 text-slate-950`}>
+                    Custom <span className="text-orange-500">Configuration</span>
+                  </h2>
+                  
+                  <form onSubmit={handleWhatsAppSubmit} className="space-y-5 text-left">
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Full Name</label>
+                      <input required type="text" className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
+                        onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">WhatsApp Number</label>
+                      <input required type="tel" className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
+                        onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Site Type</label>
+                        <select className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all text-slate-700"
+                          onChange={(e) => setFormData({...formData, type: e.target.value})}>
+                          <option>Residential</option>
+                          <option>Commercial</option>
+                          <option>Industrial</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Required kW</label>
+                        <input required type="number" placeholder="e.g. 10" className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
+                          onChange={(e) => setFormData({...formData, capacity: e.target.value})} />
+                      </div>
+                    </div>
+                    
+                    <motion.button 
+                      whileTap={{ scale: 0.98 }}
+                      type="submit" 
+                      className="w-full py-6 mt-4 rounded-2xl bg-green-500 text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-4 hover:bg-green-600 transition-all shadow-lg hover:shadow-green-500/25"
+                    >
+                      <FaWhatsapp size={18} />
+                      <span>Send to WhatsApp</span>
+                    </motion.button>
+                  </form>
+                </>
+              )}
             </motion.div>
           </div>
         )}
