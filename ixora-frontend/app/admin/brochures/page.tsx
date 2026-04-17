@@ -7,6 +7,9 @@ import { FaUpload, FaTrash, FaFilePdf, FaPlus, FaDatabase } from "react-icons/fa
 
 const audiowide = Audiowide({ weight: "400", subsets: ["latin"] });
 
+// Change this to your live server URL when deploying to production
+const API_BASE = "http://localhost:5000";
+
 export default function AdminBrochures() {
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -19,7 +22,7 @@ export default function AdminBrochures() {
 
   const fetchBrochures = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/brochures");
+      const res = await fetch(`${API_BASE}/api/brochures`);
       const data = await res.json();
       setBrochures(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -38,13 +41,15 @@ export default function AdminBrochures() {
 
     try {
       setLoading(true);
-      await fetch("http://localhost:5000/api/brochures/upload", {
+      await fetch(`${API_BASE}/api/brochures/upload`, {
         method: "POST",
         headers: { Authorization: token || "" },
         body: formData,
       });
       setTitle("");
       setFile(null);
+      
+      // Fetch fresh data from the database after a successful upload
       fetchBrochures();
     } catch (error) {
       console.error("Upload error:", error);
@@ -56,10 +61,12 @@ export default function AdminBrochures() {
   const deleteItem = async (id: string) => {
     const token = localStorage.getItem("admin");
     try {
-      await fetch("http://localhost:5000/api/brochures/" + id, {
+      await fetch(`${API_BASE}/api/brochures/${id}`, {
         method: "DELETE",
         headers: { Authorization: token || "" },
       });
+      
+      // Fetch fresh data from the database after a successful deletion
       fetchBrochures();
     } catch (error) {
       console.error("Delete error:", error);
@@ -67,10 +74,9 @@ export default function AdminBrochures() {
   };
 
   return (
-    // Max-width container to stop the UI from stretching too far
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       
-      {/* ── 1. UPLOAD TERMINAL (Now more compact) ── */}
+      {/* ── 1. UPLOAD TERMINAL ── */}
       <div className="bg-white border border-slate-100 rounded-[2rem] p-6 md:p-10 shadow-sm">
         <div className="flex items-center gap-4 mb-8">
           <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
@@ -128,7 +134,7 @@ export default function AdminBrochures() {
         </form>
       </div>
 
-      {/* ── 2. DATA REPOSITORY (Clean and organized) ── */}
+      {/* ── 2. DATA REPOSITORY ── */}
       <div className="bg-white border border-slate-100 rounded-[2rem] overflow-hidden shadow-sm">
         <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
           <div className="flex items-center gap-4">
@@ -153,9 +159,9 @@ export default function AdminBrochures() {
                 {brochures.map((item) => (
                   <motion.tr 
                     key={item._id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
                     className="hover:bg-slate-50/30 transition-colors group"
                   >
                     <td className="px-8 py-5">

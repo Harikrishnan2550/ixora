@@ -8,6 +8,9 @@ import { FaShieldHalved, FaLock, FaUser, FaArrowRight } from "react-icons/fa6";
 
 const audiowide = Audiowide({ weight: "400", subsets: ["latin"] });
 
+// Change this to your live server URL when deploying to production
+const API_BASE = "http://localhost:5000";
+
 export default function AdminLogin() {
   const router = useRouter();
 
@@ -27,14 +30,16 @@ export default function AdminLogin() {
 
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/api/admin/login", {
+
+      // ── REAL BACKEND AUTHENTICATION ──
+      const res = await fetch(`${API_BASE}/api/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
-
+      
       const data = await res.json();
-
+      
       if (data.success) {
         localStorage.setItem("admin", data.token);
         router.push("/admin/brochures");
@@ -43,8 +48,9 @@ export default function AdminLogin() {
       }
     } catch (error) {
       setError("Network Uplink Failure");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -110,7 +116,7 @@ export default function AdminLogin() {
 
             <button 
               disabled={loading}
-              className="group w-full bg-orange-500 text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-4 hover:bg-white hover:text-slate-950 transition-all shadow-xl shadow-orange-500/10"
+              className="group w-full bg-orange-500 text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-4 hover:bg-white hover:text-slate-950 transition-all shadow-xl shadow-orange-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Decrypting..." : "Initialize Uplink"}
               <FaArrowRight className="group-hover:translate-x-1 transition-transform" />

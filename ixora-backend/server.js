@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 
 import brochureRoutes from "./routes/brochureRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import contactRoutes from "./routes/contactRoutes.js"; // ── 1. ADDED CONTACT ROUTE IMPORT
 
 import connectDB from "./config/db.js";
 
@@ -20,6 +21,8 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/brochures", brochureRoutes);
 
 app.use("/api/admin", adminRoutes);
+
+app.use("/api/contact", contactRoutes); // ── 2. MOUNTED THE CONTACT ROUTE
 
 app.get("/", (req, res) => {
   res.send("Ixora Backend Running");

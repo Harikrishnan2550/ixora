@@ -62,7 +62,7 @@ export default function Footer() {
                       Powered by
                     </p>
                     {/* The Parent Logo Container - Grayscale to Color on Hover */}
-                    <div className="relative h-3.5 w-24 md:h-8 md:w-20 opacity-70 group-hover:opacity-100 transition-all duration-500 ">
+                    <div className="relative h-12 w-32 md:h-12 md:w-40 transition-all duration-500 ">
                       <Image 
                         src="/Protech-Automation-logo.png" 
                         alt="Protech Automation"
@@ -129,11 +129,11 @@ export default function Footer() {
 
               <div className="flex flex-col gap-3">
                 <a href="mailto:sys-admin@ixoratech.com" className="text-sm font-bold text-slate-600 hover:text-orange-500 transition-colors">
-                  sys-admin@ixoratech.com
+                  info@protechautomationsolar.com
                 </a>
                 <p className={`${michroma.className} text-[8px] uppercase tracking-[0.3em] text-slate-400`}>
-                  Kerala, India // Operations HQ
-                </p>
+                  Kerala, India  ||   Operations HQ
+                </p> 
               </div>
             </motion.div>
 
@@ -161,7 +161,7 @@ export default function Footer() {
             <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">
               Developed by{" "}
               <Link 
-                href="https://winshine.in" 
+                href="https://winshineinfotech.com/" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-slate-950 hover:text-orange-500 transition-colors duration-300 underline underline-offset-4 decoration-slate-200 hover:decoration-orange-500"

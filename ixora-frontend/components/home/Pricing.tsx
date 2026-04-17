@@ -8,6 +8,9 @@ import Image from "next/image";
 
 const audiowide = Audiowide({ weight: "400", subsets: ["latin"] });
 
+// Automatically use live backend URL if it exists, otherwise fall back to localhost
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function Pricing() {
   // Upgraded State: Tracks if the modal is open, which type of form to show, and the selected plan
   const [modalConfig, setModalConfig] = useState<{
@@ -29,6 +32,9 @@ export default function Pricing() {
     type: "Residential", 
     capacity: "" 
   });
+
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
 
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -61,23 +67,58 @@ export default function Pricing() {
   const handleWhatsAppSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const message = `*New Solar Inquiry*%0A*Name:* ${formData.name}%0A*Phone:* ${formData.phone}%0A*Type:* ${formData.type}%0A*Requested Capacity:* ${formData.capacity}kW`;
-    window.open(`https://wa.me/918714302550?text=${message}`, "_blank"); 
+    window.open(`https://wa.me/918891785527?text=${message}`, "_blank"); 
     setModalConfig({ ...modalConfig, isOpen: false });
   };
 
-  // Handler for the Fixed Plan Email Form (Logic to be connected later)
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  // Handler for the Fixed Plan Email Form (Now wired to Brevo backend)
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const submissionData = {
-      planSelected: modalConfig.selectedPlan,
-      customerDetails: formData
-    };
-    
-    console.log("Ready for Email API integration:", submissionData);
-    // TODO: Add Mail Configuration API call here later
-    
-    // Temporarily just close the modal upon "submit"
-    setModalConfig({ ...modalConfig, isOpen: false });
+    setLoading(true);
+    setStatus("idle");
+
+    try {
+      const res = await fetch(`${API_BASE}/api/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetEmail: "info@protechautomationsolar.com",
+          subject: `New Plan Enquiry: ${modalConfig.selectedPlan}`,
+          customerName: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          address: formData.address,
+          plan: modalConfig.selectedPlan,
+          message: "Standard Package Inquiry"
+        }),
+      });
+
+      // Force error if backend/Brevo rejects it
+      if (!res.ok) {
+        throw new Error("Backend rejected the transmission.");
+      }
+
+      setStatus("success");
+      
+      // Close modal automatically after a brief delay
+      setTimeout(() => {
+        setModalConfig({ ...modalConfig, isOpen: false });
+        setStatus("idle");
+        setFormData({ name: "", phone: "", email: "", address: "", type: "Residential", capacity: "" });
+      }, 2500);
+
+    } catch (error) {
+      console.error("Transmission failed:", error);
+      setStatus("error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper to ensure only numbers are typed in the phone field
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, ''); // Strip non-numeric characters
+    setFormData({ ...formData, phone: value });
   };
 
   return (
@@ -220,8 +261,8 @@ export default function Pricing() {
                   onClick={() => setModalConfig({ isOpen: true, type: "custom", selectedPlan: "Custom Capacity" })}
                   className="bg-white text-orange-500 w-full px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-950 hover:text-white transition-all duration-500 shadow-xl flex items-center justify-center gap-4 group/btn"
                >
-                  <span>Start Configurator</span>
-                  <FaArrowRight className="group-hover/btn:translate-x-1 transition-transform" />
+                 <span>Start Configurator</span>
+                 <FaArrowRight className="group-hover/btn:translate-x-1 transition-transform" />
                </button>
              </div>
           </motion.div>
@@ -275,8 +316,16 @@ export default function Pricing() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Phone System</label>
-                        <input required type="tel" className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
-                          onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+                        <input 
+                          required 
+                          type="tel" 
+                          maxLength={10} 
+                          pattern="[0-9]{10}"
+                          value={formData.phone}
+                          placeholder="10 Digits"
+                          className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
+                          onChange={handlePhoneChange} 
+                        />
                       </div>
                     </div>
                     
@@ -292,14 +341,40 @@ export default function Pricing() {
                         onChange={(e) => setFormData({...formData, address: e.target.value})} />
                     </div>
 
-                    <motion.button 
-                      whileTap={{ scale: 0.98 }}
-                      type="submit" 
-                      className="w-full py-6 mt-4 rounded-2xl bg-slate-950 text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-4 hover:bg-orange-500 transition-all shadow-lg hover:shadow-orange-500/25"
-                    >
-                      <FaEnvelope size={16} />
-                      <span>Submit Request</span>
-                    </motion.button>
+                    {status === "success" && (
+                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="p-3 bg-green-50 text-green-600 text-[9px] font-black uppercase tracking-widest rounded-xl text-center">
+                        Transmission Successful. We will contact you shortly.
+                      </motion.div>
+                    )}
+                    {status === "error" && (
+                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="p-3 bg-red-50 text-red-600 text-[9px] font-black uppercase tracking-widest rounded-xl text-center">
+                        Transmission Failed. Please use WhatsApp.
+                      </motion.div>
+                    )}
+
+                    <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <motion.button 
+                        whileTap={{ scale: 0.98 }}
+                        disabled={loading || formData.phone.length !== 10}
+                        type="submit" 
+                        className="w-full py-5 rounded-2xl bg-slate-950 text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-orange-500 transition-all shadow-lg hover:shadow-orange-500/25 disabled:opacity-70 disabled:cursor-not-allowed"
+                      >
+                        <FaEnvelope size={14} />
+                        <span>{loading ? "Transmitting..." : "Send Email"}</span>
+                      </motion.button>
+                      <motion.button 
+                        type="button"
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          const msg = `*New System Inquiry*%0A*Plan:* ${modalConfig.selectedPlan}%0A*Name:* ${formData.name}%0A*Phone:* ${formData.phone}%0A*Location:* ${formData.address}`;
+                          window.open(`https://wa.me/918891785527?text=${msg}`, "_blank"); 
+                        }}
+                        className="w-full py-5 rounded-2xl bg-green-500 text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-green-600 transition-all shadow-lg hover:shadow-green-500/25"
+                      >
+                        <FaWhatsapp size={16} />
+                        <span>Direct WhatsApp</span>
+                      </motion.button>
+                    </div>
                   </form>
                 </>
               ) : (
@@ -318,8 +393,16 @@ export default function Pricing() {
                     
                     <div className="space-y-2">
                       <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">WhatsApp Number</label>
-                      <input required type="tel" className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
-                        onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+                      <input 
+                        required 
+                        type="tel" 
+                        maxLength={10} 
+                        pattern="[0-9]{10}"
+                        value={formData.phone}
+                        placeholder="10 Digits"
+                        className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
+                        onChange={handlePhoneChange} 
+                      />
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4">
@@ -341,8 +424,9 @@ export default function Pricing() {
                     
                     <motion.button 
                       whileTap={{ scale: 0.98 }}
+                      disabled={formData.phone.length !== 10}
                       type="submit" 
-                      className="w-full py-6 mt-4 rounded-2xl bg-green-500 text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-4 hover:bg-green-600 transition-all shadow-lg hover:shadow-green-500/25"
+                      className="w-full py-6 mt-4 rounded-2xl bg-green-500 text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-4 hover:bg-green-600 transition-all shadow-lg hover:shadow-green-500/25 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                       <FaWhatsapp size={18} />
                       <span>Send to WhatsApp</span>

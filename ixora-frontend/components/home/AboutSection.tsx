@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { motion, useScroll, useTransform, useInView } from "framer-motion";
+import { motion, useScroll, useTransform, useInView, Variants } from "framer-motion";
 import { useRef } from "react";
 import { Audiowide } from "next/font/google";
 
@@ -19,8 +19,8 @@ export default function AboutSection() {
   // Parallax effect: subtle on mobile, pronounced on desktop
   const yParallax = useTransform(scrollYProgress, [0, 1], [-30, 30]);
 
-  // Variants for staggered children
-  const containerVariants = {
+  // Explicity typed as "Variants" to satisfy Vercel's strict TypeScript checks
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -28,9 +28,9 @@ export default function AboutSection() {
     }
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 40 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
   };
 
   return (
@@ -49,7 +49,7 @@ export default function AboutSection() {
               <motion.div 
                 initial={{ x: "0%" }}
                 animate={isInView ? { x: "100%" } : { x: "0%" }}
-                transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1], delay: 0.2 }}
+                transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
                 className="absolute inset-0 bg-slate-900 z-10"
               />
 
@@ -83,7 +83,7 @@ export default function AboutSection() {
                 className="bg-slate-950 p-6 md:p-10 rounded-[1.5rem] md:rounded-[2.5rem] text-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)] min-w-[140px] md:min-w-[200px]"
               >
                 <p className={`${audiowide.className} text-3xl md:text-5xl tracking-tighter mb-1 md:mb-2 italic`}>
-                  05<span className="text-orange-500 text-xl md:text-2xl ml-1">Y</span>
+                  15<span className="text-orange-500 text-xl md:text-2xl ml-1">Y</span>
                 </p>
                 <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-slate-400">
                   Industry Excellence
@@ -114,7 +114,7 @@ export default function AboutSection() {
 
             <motion.h2 
               variants={itemVariants}
-              className={`${audiowide.className} text-[11vw] sm:text-[8vw] lg:text-[4.5rem] xl:text-[5.1rem] leading-[0.95] md:leading-[0.9] tracking-[-0.05em] uppercase text-slate-900 mb-8 md:mb-10`}
+              className={`${audiowide.className} text-[11vw] sm:text-[8vw] lg:text-[4.5rem] xl:text-[5.5rem] leading-[0.95] md:leading-[0.9] tracking-[-0.05em] uppercase text-slate-900 mb-8 md:mb-10`}
             >
               Engineering <br />
               <span className="text-slate-300 italic">Power Autonomy.</span>
@@ -178,7 +178,7 @@ export default function AboutSection() {
             <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] text-orange-500 mb-8">
               Backed By Industrial Expertise
             </p>
-            <div className="relative h-16 sm:h-20 md:h-24 w-full max-w-[320px] transition-all duration-500">
+            <div className="relative h-28 sm:h-20 md:h-32 w-full max-w-[420px] transition-all duration-500">
               <Image 
                 src="/Protech-Automation-logo.png" 
                 alt="Protech Automation" 

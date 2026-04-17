@@ -7,6 +7,9 @@ import { Audiowide } from "next/font/google";
 
 const audiowide = Audiowide({ weight: "400", subsets: ["latin"] });
 
+// Change this to your live server URL when deploying to production
+const API_BASE = "http://localhost:5000";
+
 export default function Brochures() {
   const [brochures, setBrochures] = useState<any[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -23,23 +26,20 @@ export default function Brochures() {
   }, []);
 
   const fetchBrochures = async () => {
-    // ── TEMPORARY MOCK DATA FOR VERCEL DEMO ──
-    const dummyData = [
-      { _id: "1", title: "3kW Essential Grid Spec", fileUrl: "#" },
-      { _id: "2", title: "5kW Performance Node", fileUrl: "#" },
-      { _id: "3", title: "Hybrid Inverter Datasheet", fileUrl: "#" },
-    ];
-    setBrochures(dummyData);
-
-    /* BACKEND FETCH LOGIC (Commented out for UI demo)
     try {
-      const res = await fetch(`http://localhost:5000/api/brochures`);
+      const res = await fetch(`${API_BASE}/api/brochures`);
       const data = await res.json();
-      setBrochures(data);
+      setBrochures(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Technical Archive Error:", error);
     }
-    */
+  };
+
+  // Helper to ensure URLs are formatted correctly from the backend
+  const getFileUrl = (url: string) => {
+    if (!url) return "#";
+    if (url.startsWith("http")) return url;
+    return `${API_BASE}/${url.replace(/^\//, '')}`;
   };
 
   return (
@@ -133,13 +133,16 @@ export default function Brochures() {
 
               <div className="flex gap-4 mt-12 relative z-10">
                 <a
-                  href={item.fileUrl}
+                  href={getFileUrl(item.fileUrl)}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex-1 flex items-center justify-center gap-2 bg-slate-950 text-white text-[10px] font-black uppercase tracking-widest py-4 rounded-xl hover:bg-orange-500 transition-all duration-300 shadow-md hover:shadow-orange-500/20 group/view"
                 >
                   <FaEye className="group-hover/view:scale-110 transition-transform" /> View
                 </a>
                 <a
-                  href={item.fileUrl}
+                  href={getFileUrl(item.fileUrl)}
+                  download
                   className="flex-1 flex items-center justify-center gap-2 border border-slate-200 text-slate-900 text-[10px] font-black uppercase tracking-widest py-4 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 group/dl"
                 >
                   <FaDownload className="text-slate-400 group-hover/dl:text-slate-900 transition-colors" /> Get Copy

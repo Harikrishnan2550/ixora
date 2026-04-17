@@ -11,6 +11,9 @@ import {
 
 const audiowide = Audiowide({ weight: "400", subsets: ["latin"] });
 
+// Change this to your live server URL when deploying to production
+const API_BASE = "http://localhost:5000";
+
 const compliances = [
   { title: "IEC 61215 & 61730", desc: "Design qualification and type approval for terrestrial photovoltaic modules.", icon: <FaCertificate /> },
   { title: "MNRE Approved", desc: "Certified under the Ministry of New and Renewable Energy guidelines.", icon: <FaShieldHalved /> },
@@ -35,34 +38,27 @@ export default function BrochurePage() {
   }, []);
 
   const fetchBrochures = async () => {
-    // ── TEMPORARY MOCK DATA FOR VERCEL DEMO ──
-    setTimeout(() => {
-      const dummyData = [
-        { _id: "1", title: "3kW Essential Grid Spec", fileUrl: "#" },
-        { _id: "2", title: "5kW Performance Node Protocol", fileUrl: "#" },
-        { _id: "3", title: "Anodized Mounting Structural Integrity", fileUrl: "#" },
-        { _id: "4", title: "Protech Hybrid Inverter Datasheet", fileUrl: "#" },
-        { _id: "5", title: "LiFePO4 Battery Storage Node", fileUrl: "#" },
-        { _id: "6", title: "Commercial Grid-Sync Guidelines", fileUrl: "#" },
-      ];
-      setBrochures(dummyData);
-      setLoading(false);
-    }, 800); // 800ms timeout to show the beautiful loading spinner briefly
-
-    /* BACKEND FETCH LOGIC (Commented out for UI demo)
     try {
-      const res = await fetch("http://localhost:5000/api/brochures");
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/api/brochures`);
       const data = await res.json();
       setBrochures(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.log("Fetch error:", error);
+      console.error("Fetch error:", error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-    */
+  };
+
+  // Helper to ensure URLs are formatted correctly from the backend
+  const getFileUrl = (url: string) => {
+    if (!url) return "#";
+    if (url.startsWith("http")) return url;
+    return `${API_BASE}/${url.replace(/^\//, '')}`;
   };
 
   return (
-    <div ref={containerRef} className="relative bg-[#FAFAFA] min-h-screen overflow-hidden">
+    <div ref={containerRef} className="relative bg-[#FAFAFA] min-h-screen overflow-hidden mt-6 lg:mt-14">
       
       {/* ── 1. KINETIC BACKGROUND ── */}
       <div className="absolute inset-0 flex items-center pointer-events-none opacity-[0.02] z-0 overflow-hidden">
@@ -191,7 +187,9 @@ export default function BrochurePage() {
 
                   <div className="flex flex-col gap-3 mt-auto">
                     <a
-                      href={item.fileUrl}
+                      href={getFileUrl(item.fileUrl)}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="flex items-center justify-between bg-slate-950 text-white px-6 py-4.5 rounded-xl font-black text-[9px] uppercase tracking-widest group/view hover:bg-orange-500 transition-all duration-300"
                     >
                       <span>View Protocol</span>
@@ -199,7 +197,8 @@ export default function BrochurePage() {
                     </a>
 
                     <a
-                      href={item.fileUrl}
+                      href={getFileUrl(item.fileUrl)}
+                      download
                       className="flex items-center justify-between border border-slate-200 text-slate-950 px-6 py-4.5 rounded-xl font-black text-[9px] uppercase tracking-widest hover:border-slate-950 hover:bg-slate-50 transition-all duration-300 group/dl"
                     >
                       <span>Download File</span>
@@ -209,6 +208,18 @@ export default function BrochurePage() {
                 </motion.div>
               ))}
             </div>
+          )}
+
+          {!loading && brochures.length === 0 && (
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="text-center py-32 border-2 border-dashed border-slate-200 rounded-[3rem] bg-slate-50/50"
+            >
+              <FaBookBookmark className="mx-auto text-4xl text-slate-300 mb-6" />
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">
+                0 Documents / Database Syncing...
+              </p>
+            </motion.div>
           )}
         </section>
 

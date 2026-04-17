@@ -90,7 +90,7 @@ export default function Navbar() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className={`
-                  ${michroma.className} text-[8px] tracking-[0.2em] px-6 py-2.5 rounded-full flex items-center gap-3 transition-all bg-slate-950 text-white hover:bg-orange-500
+                  ${michroma.className} text-[10px] tracking-[0.2em] px-6 py-2.5 rounded-full flex items-center gap-3 transition-all bg-slate-950 text-white hover:bg-orange-500
                   [-webkit-text-stroke:0.5px_currentColor]
                 `}
               >

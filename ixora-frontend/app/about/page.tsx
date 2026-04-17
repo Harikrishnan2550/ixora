@@ -52,7 +52,7 @@ export default function AboutPage() {
   ];
 
   return (
-    <section ref={containerRef} className="relative bg-[#FAFAFA] overflow-hidden">
+    <section ref={containerRef} className="relative bg-[#FAFAFA] overflow-hidden mt-5 lg:mt-10">
       
       {/* ── 1. KINETIC BACKGROUND ── */}
       <div className="absolute inset-0 flex items-center pointer-events-none opacity-[0.02] z-0 overflow-hidden">
@@ -82,7 +82,7 @@ export default function AboutPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.8 }}
-            className={`${audiowide.className} text-6xl md:text-[7rem] lg:text-[8rem] leading-[0.85] tracking-[-0.05em] uppercase text-slate-950 mb-10`}
+            className={`${audiowide.className} text-5xl md:text-[7rem] lg:text-[8rem] leading-[0.85] tracking-[-0.05em] uppercase text-slate-950 mb-10`}
           >
             Defining <br />
             <span className="text-orange-500 italic">Standards.</span>
@@ -283,7 +283,7 @@ export default function AboutPage() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#fb923c_1px,_transparent_1px)] [background-size:30px_30px] opacity-10" />
             
             <div className="relative z-10 max-w-3xl mx-auto">
-              <h2 className={`${audiowide.className} text-4xl md:text-5xl uppercase text-white mb-8`}>
+              <h2 className={`${audiowide.className} text-[2rem] md:text-5xl uppercase text-white mb-8`}>
                 Regional <span className="text-orange-500 italic">Specialization</span>
               </h2>
               <p className="text-slate-400 text-lg leading-relaxed mb-12">

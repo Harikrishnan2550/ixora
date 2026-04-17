@@ -110,7 +110,7 @@ export default function ContactCTA() {
               viewport={{ once: true, margin: "-50px" }}
             >
               <a
-                href="https://wa.me/919037845480?text=System%20Initiation:%20I%20would%20like%20to%20request%20a%20technical%20consultation%20for%20solar%20infrastructure."
+                href="https://wa.me/918891785527?text=System%20Initiation:%20I%20would%20like%20to%20request%20a%20technical%20consultation%20for%20solar%20infrastructure."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group block"

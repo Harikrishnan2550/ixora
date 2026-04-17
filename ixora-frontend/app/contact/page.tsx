@@ -5,10 +5,13 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { Audiowide } from "next/font/google";
 import { 
   FaArrowRight, FaPhone, FaEnvelope, FaLocationDot, 
-  FaLink, FaWhatsapp, FaServer, FaMapLocationDot 
+  FaWhatsapp, FaMapLocationDot 
 } from "react-icons/fa6";
 
 const audiowide = Audiowide({ weight: "400", subsets: ["latin"] });
+
+// This automatically uses your live backend URL if it exists, otherwise falls back to localhost.
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function Contact() {
   const [form, setForm] = useState({
@@ -18,6 +21,9 @@ export default function Contact() {
     address: "",
     message: "",
   });
+  
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -31,20 +37,51 @@ export default function Contact() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: any) => {
+  // Helper to ensure only numbers are typed in the phone field
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, ''); // Strip non-numeric characters
+    setForm({ ...form, phone: value });
+  };
+
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
-    console.log("Terminal Output:", form);
-    // Implement your email sending logic here
+    setLoading(true);
+    setStatus("idle");
+
+    try {
+      const res = await fetch(`${API_BASE}/api/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetEmail: "info@protechautomationsolar.com",
+          subject: "New Direct Enquiry from Contact Page",
+          ...form
+        }),
+      });
+      
+      // ── THE FIX: Force error if backend/Brevo rejects it ──
+      if (!res.ok) {
+        throw new Error("Backend rejected the transmission.");
+      }
+      
+      setStatus("success");
+      setForm({ name: "", email: "", phone: "", address: "", message: "" });
+    } catch (error) {
+      console.error("Submission failed:", error);
+      setStatus("error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleWhatsApp = (e: any) => {
     e.preventDefault();
     const message = `*New Inquiry*%0A*Name:* ${form.name}%0A*Location:* ${form.address}`;
-    window.open(`https://wa.me/919037845480?text=${message}`, "_blank");
+    window.open(`https://wa.me/918891785527?text=${message}`, "_blank");
   };
 
   return (
-    <section ref={containerRef} className="relative bg-[#FAFAFA] min-h-screen overflow-hidden">
+    <section ref={containerRef} className="relative bg-[#FAFAFA] min-h-screen overflow-hidden mt-5 lg:mt-10">
       
       {/* ── 1. KINETIC BACKGROUND ── */}
       <div className="absolute inset-0 flex items-center pointer-events-none opacity-[0.02] z-0 overflow-hidden text-center">
@@ -118,8 +155,8 @@ export default function Contact() {
 
             <div className="space-y-10 relative z-10 mb-16">
               {[
-                { label: "Voice Link", val: "+91 9037 845 480", icon: <FaPhone /> },
-                { label: "Data Uplink", val: "info@ixoratech.com", icon: <FaEnvelope /> },
+                { label: "Voice Link", val: "+91 8891785527", icon: <FaPhone /> },
+                { label: "Data Uplink", val: "info@protechautomationsolar.com", icon: <FaEnvelope /> },
                 { label: "Base Location", val: "Kerala, India", icon: <FaLocationDot /> }
               ].map((item, i) => (
                 <motion.div 
@@ -130,12 +167,14 @@ export default function Contact() {
                   transition={{ delay: 0.3 + (i * 0.15), duration: 0.5 }}
                   className="group flex items-center gap-6"
                 >
-                  <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 group-hover:bg-orange-500 group-hover:text-white group-hover:border-orange-500 transition-all duration-500 shadow-sm">
+                  <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex flex-shrink-0 items-center justify-center text-slate-400 group-hover:bg-orange-500 group-hover:text-white group-hover:border-orange-500 transition-all duration-500 shadow-sm">
                     {item.icon}
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-[8px] font-black uppercase tracking-[0.3em] text-orange-500 mb-2">{item.label}</p>
-                    <p className={`${audiowide.className} text-lg md:text-xl text-white tracking-wide`}>{item.val}</p>
+                    <p className={`${audiowide.className} ${item.label === 'Data Uplink' ? 'text-base md:text-xl' : 'text-lg md:text-xl'} text-white tracking-wide truncate sm:whitespace-normal`}>
+                      {item.val}
+                    </p>
                   </div>
                 </motion.div>
               ))}
@@ -196,6 +235,7 @@ export default function Contact() {
                   <input
                     required
                     name="name"
+                    value={form.name}
                     placeholder="E.G. JOHN DOE"
                     className="w-full bg-slate-50 border border-slate-200/60 p-5 rounded-2xl text-xs font-bold uppercase tracking-widest focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300"
                     onChange={handleChange}
@@ -205,10 +245,14 @@ export default function Contact() {
                   <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Phone System</label>
                   <input
                     required
+                    type="tel"
+                    maxLength={10}
+                    pattern="[0-9]{10}"
                     name="phone"
-                    placeholder="+91 0000 000 000"
+                    value={form.phone}
+                    placeholder="10 DIGITS"
                     className="w-full bg-slate-50 border border-slate-200/60 p-5 rounded-2xl text-xs font-bold uppercase tracking-widest focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300"
-                    onChange={handleChange}
+                    onChange={handlePhoneChange}
                   />
                 </div>
               </div>
@@ -219,6 +263,7 @@ export default function Contact() {
                   required
                   type="email"
                   name="email"
+                  value={form.email}
                   placeholder="USER@DOMAIN.COM"
                   className="w-full bg-slate-50 border border-slate-200/60 p-5 rounded-2xl text-xs font-bold uppercase tracking-widest focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300"
                   onChange={handleChange}
@@ -230,6 +275,7 @@ export default function Contact() {
                 <input
                   required
                   name="address"
+                  value={form.address}
                   placeholder="SITE LOCATION OR CITY"
                   className="w-full bg-slate-50 border border-slate-200/60 p-5 rounded-2xl text-xs font-bold uppercase tracking-widest focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300"
                   onChange={handleChange}
@@ -241,23 +287,38 @@ export default function Contact() {
                 <textarea
                   required
                   name="message"
+                  value={form.message}
                   placeholder="DESCRIBE YOUR SYSTEM REQUIREMENTS (KW, ON-GRID/HYBRID, ETC)..."
                   className="w-full bg-slate-50 border border-slate-200/60 p-5 rounded-2xl text-xs font-bold uppercase tracking-widest min-h-[140px] resize-none focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300"
                   onChange={handleChange}
                 />
               </div>
 
-              <div className="pt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {status === "success" && (
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="p-4 bg-green-50 text-green-600 text-[10px] font-black uppercase tracking-widest rounded-2xl text-center">
+                  Transmission Successful. Our team will contact you shortly.
+                </motion.div>
+              )}
+
+              {status === "error" && (
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="p-4 bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest rounded-2xl text-center">
+                  Transmission Failed. Please check your connection or use WhatsApp.
+                </motion.div>
+              )}
+
+              <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <motion.button
                   whileTap={{ scale: 0.98 }}
+                  disabled={loading || form.phone.length !== 10}
                   type="submit"
-                  className="w-full bg-slate-950 text-white p-6 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-4 group hover:bg-orange-500 transition-all shadow-lg"
+                  className="w-full bg-slate-950 text-white p-6 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-4 group hover:bg-orange-500 transition-all shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  <span>Initialize</span>
-                  <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
+                  <span>{loading ? "Transmitting..." : "Initialize"}</span>
+                  {!loading && <FaArrowRight className="group-hover:translate-x-2 transition-transform" />}
                 </motion.button>
 
                 <motion.button
+                  type="button"
                   whileTap={{ scale: 0.98 }}
                   onClick={handleWhatsApp}
                   className="w-full bg-green-500 text-white p-6 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-4 group hover:bg-green-600 transition-all shadow-lg hover:shadow-green-500/20"

@@ -17,8 +17,8 @@ import {
 
 const audiowide = Audiowide({ weight: "400", subsets: ["latin"] });
 
-// ── COUNTER COMPONENT FOR PERFORMANCE METRICS ──
-function Counter({ value, suffix = "" }) {
+// ── COUNTER COMPONENT FOR PERFORMANCE METRICS (TYPESCRIPT FIXED) ──
+function Counter({ value, suffix = "" }: { value: string | number; suffix?: string }) {
   const [count, setCount] = useState(0);
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-50px" });
@@ -26,7 +26,7 @@ function Counter({ value, suffix = "" }) {
   useEffect(() => {
     if (inView) {
       let start = 0;
-      const end = parseInt(value);
+      const end = typeof value === "string" ? parseInt(value) : value;
       const duration = 2; // seconds
       let timer = setInterval(() => {
         start += end / (duration * 60);
@@ -120,7 +120,7 @@ export default function ExpandedServices() {
   const partners = ["TATA POWER", "ADANI SOLAR", "WAREE", "LUMINOUS", "VIKRAM SOLAR", "GROWATT", "SUNGROW"];
 
   return (
-    <section ref={containerRef} className="relative bg-[#FCFCFC] overflow-hidden">
+    <section ref={containerRef} className="relative bg-[#FCFCFC] overflow-hidden mt-12 lg:mt-2">
       
       {/* ── 1. KINETIC BACKGROUND (PARALLAX TYPOGRAPHY) ── */}
       <div className="absolute inset-0 flex flex-col justify-center pointer-events-none opacity-[0.03] z-0 overflow-hidden">
@@ -148,7 +148,7 @@ export default function ExpandedServices() {
               {/* Animated drawing line */}
               <motion.div 
                 initial={{ width: 0 }}
-                whileInView={{ width: 64 }} // w-16 equivalent
+                whileInView={{ width: 64 }}
                 viewport={{ once: true }}
                 transition={{ duration: 1, delay: 0.2 }}
                 className="h-px bg-slate-300" 
@@ -180,14 +180,13 @@ export default function ExpandedServices() {
         {/* ── 3. DETAILED SERVICE TIERS (PARALLAX CARDS) ── */}
         <div className="grid md:grid-cols-2 gap-6 lg:gap-10 items-start mb-44">
           {services.map((service, index) => {
-            // Apply different parallax speeds based on column (even vs odd)
             const yMovement = index % 2 === 0 ? yCol1 : yCol2;
             const isRightColumn = index % 2 !== 0;
 
             return (
               <motion.div
                 key={index}
-                style={{ y: yMovement }} // Attach parallax
+                style={{ y: yMovement }}
                 initial={{ opacity: 0, y: 100 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
@@ -196,7 +195,6 @@ export default function ExpandedServices() {
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-orange-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                 
-                {/* Animated Background Number */}
                 <motion.div 
                   initial={{ scale: 0.5, opacity: 0, rotate: -10 }}
                   whileInView={{ scale: 1, opacity: 1, rotate: 0 }}
@@ -289,7 +287,7 @@ export default function ExpandedServices() {
         </div>
 
         {/* ── 5. QUALITY ASSURANCE PROTOCOLS (STAGGERED LIST) ── */}
-        <div className="grid lg:grid-cols-4 gap-12 mb-44">
+        <div className="grid lg:grid-cols-4 gap-12  ">
           {protocols.map((p, i) => (
             <motion.div 
               key={i} 
@@ -310,40 +308,35 @@ export default function ExpandedServices() {
         </div>
       </div>
 
-      {/* ── 6. PARTNER MARQUEE (Infinite Loop) ── */}
-      <div className="bg-slate-950 py-6 overflow-hidden relative">
-  {/* Side Fades */}
-  <div className="absolute left-0 top-0 h-full w-40 bg-gradient-to-r from-slate-950 to-transparent z-10 pointer-events-none" />
-  <div className="absolute right-0 top-0 h-full w-40 bg-gradient-to-l from-slate-950 to-transparent z-10 pointer-events-none" />
-  
-  <motion.div 
-    animate={{ x: [0, -1035] }} 
-    transition={{ duration: 10, repeat: Infinity, ease: "linear" }} 
-    className="flex whitespace-nowrap gap-20"
-  >
-    {[...partners, ...partners].map((p, i) => (
-      <motion.span 
-        key={i} 
-        // 1. Start as slate-800 (#1e293b)
-        initial={{ color: "#1e293b" }} 
-        // 2. Turn orange-500 (#f97316) when in the "view" box
-        whileInView={{ color: "#f97316" }} 
-        // 3. Keep the hover effect for desktop users
-        whileHover={{ color: "#f97316" }} 
-        viewport={{ 
-          // 4. This is the magic: Shrinks the trigger box by 35% on the left and right!
-          // It forces the text to only highlight when it reaches the middle 30% of the screen.
-          margin: "0px -35% 0px -35%", 
-          amount: "some" 
-        }}
-        transition={{ duration: 0.4, ease: "easeInOut" }}
-        className={`${audiowide.className} text-3xl md:text-4xl cursor-default`}
-      >
-        {p}
-      </motion.span>
-    ))}
-  </motion.div>
-</div>
+      {/* ── 6. PARTNER MARQUEE (Center Focus Highlight) ── */}
+      <div className="bg-slate-950 py-6 overflow-hidden relative mb-6">
+        {/* Side Fades */}
+        <div className="absolute left-0 top-0 h-full w-40 bg-gradient-to-r from-slate-950 to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 h-full w-40 bg-gradient-to-l from-slate-950 to-transparent z-10 pointer-events-none" />
+        
+        <motion.div 
+          animate={{ x: [0, -1035] }} 
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }} 
+          className="flex whitespace-nowrap gap-20"
+        >
+          {[...partners, ...partners].map((p, i) => (
+            <motion.span 
+              key={i} 
+              initial={{ color: "#1e293b" }} // text-slate-800
+              whileInView={{ color: "#f97316" }} // text-orange-500
+              whileHover={{ color: "#f97316" }} 
+              viewport={{ 
+                margin: "0px -35% 0px -35%", 
+                amount: "some" 
+              }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+              className={`${audiowide.className} text-3xl md:text-4xl cursor-default`}
+            >
+              {p}
+            </motion.span>
+          ))}
+        </motion.div>
+      </div>
     </section>
   );
 }

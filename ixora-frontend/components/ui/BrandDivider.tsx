@@ -14,7 +14,7 @@ if (typeof window !== "undefined") {
 
 export default function BrandDivider({ 
   text = "IXORA TECH", 
-  subName = "Precision Infrastructure" 
+  // subName = "Precision Infrastructure" 
 }) {
   const containerRef = useRef<HTMLHeadingElement>(null);
 
@@ -43,7 +43,7 @@ export default function BrandDivider({
   }, [text]);
 
   return (
-    <section className="relative py-24 md:py-44 bg-slate-950 overflow-hidden flex flex-col items-center justify-center border-y border-white/5">
+    <section className="relative py-24 md:py-12 bg-slate-950 overflow-hidden flex flex-col items-center justify-center border-y border-white/5">
       
       {/* ── 1. KINETIC BACKGROUND ── */}
       <div className="absolute inset-0 pointer-events-none">
@@ -82,18 +82,7 @@ export default function BrandDivider({
           </span>
         </h1>
 
-        {/* ── 3. SUBTEXT ── */}
-        <div className="mt-14 flex flex-col items-center gap-6">
-          <motion.div 
-            initial={{ width: 0 }}
-            whileInView={{ width: "120px" }}
-            transition={{ duration: 1.5, ease: "circOut" }}
-            className="h-[1px] bg-orange-500 shadow-[0_0_20px_#f97316]" 
-          />
-          <p className="text-[10px] md:text-[12px] font-black tracking-[0.8em] text-slate-500 uppercase">
-            {subName}
-          </p>
-        </div>
+       
       </div>
 
       <style jsx global>{`

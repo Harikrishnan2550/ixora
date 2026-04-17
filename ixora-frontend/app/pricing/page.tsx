@@ -11,6 +11,9 @@ import Image from "next/image";
 
 const audiowide = Audiowide({ weight: "400", subsets: ["latin"] });
 
+// Automatically use live backend URL if it exists, otherwise fall back to localhost
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 const tiers = [
   {
     name: "Essential Grid",
@@ -57,22 +60,74 @@ const faqs = [
 ];
 
 export default function PricingPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: "", phone: "", type: "Residential", capacity: "" });
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, selectedPlan: "" });
+  const [formData, setFormData] = useState({ name: "", phone: "", email: "", address: "", type: "Residential", capacity: "" });
+  
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start end", "end start"] });
   const xRight = useTransform(scrollYProgress, [0, 1], ["0%", "15%"]);
 
+  // Helper to ensure only numbers are typed in the phone field
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, ''); // Strip non-numeric characters
+    setFormData({ ...formData, phone: value });
+  };
+
+  // ── EMAIL SUBMISSION HANDLER ──
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setStatus("idle");
+
+    try {
+      const res = await fetch(`${API_BASE}/api/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetEmail: "info@protechautomationsolar.com",
+          subject: `New Plan Enquiry: ${modalConfig.selectedPlan}`,
+          customerName: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          address: formData.address,
+          plan: modalConfig.selectedPlan,
+          message: `Site Type: ${formData.type} | Requested Capacity: ${formData.capacity}kW`
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Backend rejected the transmission.");
+      }
+
+      setStatus("success");
+      
+      // Close modal automatically after 2.5 seconds on success
+      setTimeout(() => {
+        setModalConfig({ isOpen: false, selectedPlan: "" });
+        setStatus("idle");
+        setFormData({ name: "", phone: "", email: "", address: "", type: "Residential", capacity: "" });
+      }, 2500);
+
+    } catch (error) {
+      console.error("Transmission failed:", error);
+      setStatus("error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── WHATSAPP SUBMISSION HANDLER ──
   const handleWhatsAppSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const message = `*New Solar Inquiry*%0A*Name:* ${formData.name}%0A*Phone:* ${formData.phone}%0A*Type:* ${formData.type}%0A*Requested Capacity:* ${formData.capacity}kW`;
-    window.open(`https://wa.me/919999999999?text=${message}`, "_blank"); 
-    setIsModalOpen(false);
+    const message = `*New System Inquiry*%0A*Plan:* ${modalConfig.selectedPlan}%0A*Name:* ${formData.name}%0A*Phone:* ${formData.phone}%0A*Location:* ${formData.address}%0A*Type:* ${formData.type}%0A*Requested Capacity:* ${formData.capacity}kW`;
+    window.open(`https://wa.me/918891785527?text=${message}`, "_blank"); 
   };
 
   return (
-    <div ref={containerRef} className="relative bg-[#FAFAFA] min-h-screen overflow-hidden">
+    <div ref={containerRef} className="relative bg-[#FAFAFA] min-h-screen overflow-hidden mt-4 lg:mt-12">
       
       {/* ── 1. KINETIC BACKGROUND ── */}
       <div className="absolute inset-0 flex items-center pointer-events-none opacity-[0.025] z-0 overflow-hidden">
@@ -109,11 +164,9 @@ export default function PricingPage() {
           {tiers.map((tier, index) => (
             <motion.div 
               key={index} 
-              // ANIMATION: Starts off-screen to the right (x: 150)
               initial={{ opacity: 0, x: 150 }} 
               whileInView={{ opacity: 1, x: 0 }} 
               viewport={{ once: true, margin: "-50px" }} 
-              // ANIMATION: Delays based on the card's position to create the stagger
               transition={{ delay: index * 0.2, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
               className={`relative p-8 md:p-10 rounded-[3rem] border transition-all duration-700 flex flex-col ${
                 tier.popular ? "bg-slate-950 border-slate-900 shadow-2xl text-white" : "bg-white border-slate-200/60 text-slate-950 shadow-sm hover:shadow-xl"
@@ -153,7 +206,7 @@ export default function PricingPage() {
               <div className="mt-auto">
                 <h2 className={`${audiowide.className} text-5xl tracking-tighter mb-8`}>{tier.price}</h2>
                 <button
-                  onClick={() => setIsModalOpen(true)}
+                  onClick={() => setModalConfig({ isOpen: true, selectedPlan: `${tier.name} (${tier.power})` })}
                   className={`group w-full flex items-center justify-between py-5 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-500 ${
                     tier.popular ? "bg-orange-500 text-white hover:bg-white hover:text-slate-950" : "bg-slate-950 text-white hover:bg-orange-500"
                   }`}
@@ -185,11 +238,11 @@ export default function PricingPage() {
                  For industrial complexes, large residences, or off-grid hybrid battery requirements.
                </p>
                <button 
-                  onClick={() => setIsModalOpen(true)}
+                  onClick={() => setModalConfig({ isOpen: true, selectedPlan: "Custom Capacity" })}
                   className="bg-white text-orange-500 w-full py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-950 hover:text-white transition-all duration-500 shadow-xl flex items-center justify-center gap-4"
                >
-                  <span>Start Configurator</span>
-                  <FaArrowRight />
+                 <span>Start Configurator</span>
+                 <FaArrowRight />
                </button>
              </div>
           </motion.div>
@@ -214,7 +267,6 @@ export default function PricingPage() {
             {standardFeatures.map((feat, i) => (
               <motion.div 
                 key={i} 
-                // ANIMATION: Elements fly in from the right side, staggering one by one
                 initial={{ opacity: 0, x: 100 }} 
                 whileInView={{ opacity: 1, x: 0 }} 
                 viewport={{ once: true, margin: "-50px" }}
@@ -305,49 +357,145 @@ export default function PricingPage() {
 
       </div>
 
-      {/* ── CUSTOM INQUIRY FORM MODAL ── */}
+      {/* ── ENQUIRY MODAL ── */}
       <AnimatePresence>
-        {isModalOpen && (
+        {modalConfig.isOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center px-6">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setModalConfig({ ...modalConfig, isOpen: false })} className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" />
             <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} 
-              className="relative bg-white w-full max-w-lg rounded-[2.5rem] p-10 shadow-2xl"
+              className="relative bg-white w-full max-w-2xl rounded-[2.5rem] p-8 md:p-10 shadow-2xl"
             >
-              <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 text-slate-400 hover:text-slate-950 transition-colors"><FaXmark size={24} /></button>
-              <h2 className={`${audiowide.className} text-2xl uppercase mb-8`}>Custom <span className="text-orange-500">Configuration</span></h2>
+              <button onClick={() => setModalConfig({ ...modalConfig, isOpen: false })} className="absolute top-8 right-8 text-slate-400 hover:text-slate-950 transition-colors"><FaXmark size={24} /></button>
               
-              <form onSubmit={handleWhatsAppSubmit} className="space-y-5 text-left">
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Full Name</label>
-                  <input required type="text" className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-xs font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all" 
-                    onChange={(e) => setFormData({...formData, name: e.target.value})} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">WhatsApp Number</label>
-                  <input required type="tel" className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-xs font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all" 
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+              <div className="mb-8">
+                <h2 className={`${audiowide.className} text-2xl uppercase text-slate-950`}>
+                  {modalConfig.selectedPlan === "Custom Capacity" ? "Custom Configurator" : "Plan Enquiry"}
+                </h2>
+                <p className="text-[10px] font-black tracking-[0.2em] text-orange-500 uppercase mt-2">Target: {modalConfig.selectedPlan}</p>
+              </div>
+              
+              {/* ── CONDITIONAL RENDER: EMAIL FORM OR WHATSAPP FORM ── */}
+              {modalConfig.selectedPlan !== "Custom Capacity" ? (
+                /* FIXED PLAN EMAIL FORM */
+                <form onSubmit={handleEmailSubmit} className="space-y-4 md:space-y-5 text-left">
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Full Name</label>
+                      <input required value={formData.name} type="text" className="w-full bg-slate-50 border border-slate-200/60 p-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all" 
+                        onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">WhatsApp Number</label>
+                      <input 
+                        required 
+                        type="tel" 
+                        maxLength={10}
+                        pattern="[0-9]{10}"
+                        value={formData.phone} 
+                        placeholder="10 Digits"
+                        className="w-full bg-slate-50 border border-slate-200/60 p-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
+                        onChange={handlePhoneChange} 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Email Address</label>
+                      <input required value={formData.email} type="email" placeholder="Required for Reply" className="w-full bg-slate-50 border border-slate-200/60 p-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
+                        onChange={(e) => setFormData({...formData, email: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Location / City</label>
+                      <input required value={formData.address} type="text" className="w-full bg-slate-50 border border-slate-200/60 p-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all" 
+                        onChange={(e) => setFormData({...formData, address: e.target.value})} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 md:gap-5">
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Site Type</label>
+                      <select value={formData.type} className="w-full bg-slate-50 border border-slate-200/60 p-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                        onChange={(e) => setFormData({...formData, type: e.target.value})}>
+                        <option>Residential</option>
+                        <option>Commercial</option>
+                        <option>Industrial</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Required kW</label>
+                      <input required value={formData.capacity} type="number" placeholder="e.g. 5" className="w-full bg-slate-50 border border-slate-200/60 p-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
+                        onChange={(e) => setFormData({...formData, capacity: e.target.value})} />
+                    </div>
+                  </div>
+
+                  {status === "success" && (
+                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="p-3 bg-green-50 text-green-600 text-[9px] font-black uppercase tracking-widest rounded-xl text-center">
+                      Transmission Successful. We will contact you shortly.
+                    </motion.div>
+                  )}
+                  {status === "error" && (
+                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="p-3 bg-red-50 text-red-600 text-[9px] font-black uppercase tracking-widest rounded-xl text-center">
+                      Transmission Failed. Please use WhatsApp.
+                    </motion.div>
+                  )}
+
+                  <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <motion.button whileTap={{ scale: 0.98 }} disabled={loading || formData.phone.length !== 10} type="submit" 
+                      className="w-full py-4 rounded-2xl bg-slate-950 text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-orange-500 transition-all shadow-lg disabled:opacity-70 disabled:cursor-not-allowed group">
+                      <span>{loading ? "Transmitting..." : "Send Email"}</span>
+                    </motion.button>
+                    <motion.button type="button" whileTap={{ scale: 0.98 }} onClick={handleWhatsAppSubmit} 
+                      className="w-full py-4 rounded-2xl bg-green-500 text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-green-600 transition-all shadow-lg hover:shadow-green-500/25">
+                      <FaWhatsapp size={16} />
+                      <span>Direct WhatsApp</span>
+                    </motion.button>
+                  </div>
+                </form>
+              ) : (
+                /* CUSTOM CAPACITY WHATSAPP FORM */
+                <form onSubmit={handleWhatsAppSubmit} className="space-y-5 text-left">
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Site Type</label>
-                    <select className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-xs font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
-                      onChange={(e) => setFormData({...formData, type: e.target.value})}>
-                      <option>Residential</option>
-                      <option>Commercial</option>
-                      <option>Industrial</option>
-                    </select>
+                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Full Name</label>
+                    <input required type="text" className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-xs font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all" 
+                      onChange={(e) => setFormData({...formData, name: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Required kW</label>
-                    <input required type="number" placeholder="e.g. 10" className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-xs font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
-                      onChange={(e) => setFormData({...formData, capacity: e.target.value})} />
+                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">WhatsApp Number</label>
+                    <input 
+                      required 
+                      type="tel" 
+                      maxLength={10}
+                      pattern="[0-9]{10}"
+                      value={formData.phone}
+                      placeholder="10 Digits"
+                      className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-xs font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
+                      onChange={handlePhoneChange} 
+                    />
                   </div>
-                </div>
-                <button type="submit" className="w-full py-5 mt-6 rounded-2xl bg-green-500 text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-green-600 transition-all shadow-lg hover:shadow-green-500/25">
-                  <FaWhatsapp size={18} />
-                  <span>Send to WhatsApp</span>
-                </button>
-              </form>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Site Type</label>
+                      <select className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-xs font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all text-slate-700"
+                        onChange={(e) => setFormData({...formData, type: e.target.value})}>
+                        <option>Residential</option>
+                        <option>Commercial</option>
+                        <option>Industrial</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Required kW</label>
+                      <input required type="number" placeholder="e.g. 10" className="w-full bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-xs font-bold uppercase tracking-widest outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-300" 
+                        onChange={(e) => setFormData({...formData, capacity: e.target.value})} />
+                    </div>
+                  </div>
+                  <button type="submit" disabled={formData.phone.length !== 10} className="w-full py-5 mt-6 rounded-2xl bg-green-500 text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-green-600 transition-all shadow-lg hover:shadow-green-500/25 disabled:opacity-70 disabled:cursor-not-allowed">
+                    <FaWhatsapp size={18} />
+                    <span>Send to WhatsApp</span>
+                  </button>
+                </form>
+              )}
             </motion.div>
           </div>
         )}
